@@ -1,5 +1,9 @@
 <template>
-  <div id="app" />
+  <v-app>
+    <v-main>
+      some content
+    </v-main>
+  </v-app>
 </template>
 
 <script>
@@ -9,5 +13,3 @@ export default {
   components: {}
 }
 </script>
-
-<style lang="scss"></style>
