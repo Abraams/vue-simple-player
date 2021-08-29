@@ -1,9 +1,9 @@
 <template>
   <div class="floating-player elevation-10">
     <FloatingPlayerProgress
-      :curent-duration="duration"
-      :total-duration="record.duration"
-      @seek="onSeek"
+      :curent-duration="player.currentDuration"
+      :total-duration="player.totalDuration"
+      @seek="seek"
     />
     <v-card
       tile
@@ -17,7 +17,7 @@
           align="center"
         >
           <v-col cols="3">
-            <FloatingPlayerInfo
+            <RecordInfo
               :thumb="record.img"
               :sound-author="record.author"
               :sound-name="record.name"
@@ -25,11 +25,11 @@
           </v-col>
           <v-col>
             <FloatingPlayerControls
-              :playing="isPlaying"
-              @click:play="onPlay"
-              @click:pause="onPause"
-              @click:prev="onSkipPrev"
-              @click:next="onSkipNext"
+              :playing="player.isPlaying"
+              @click:play="play"
+              @click:pause="pause"
+              @click:prev="skipPrev"
+              @click:next="skipNext"
             />
           </v-col>
           <v-col
@@ -41,12 +41,11 @@
               justify="end"
             >
               <FloatingPlayerDuration
-                :curent-duration="duration"
-                :total-duration="record.duration"
+                :curent-duration="player.currentDuration"
+                :total-duration="player.totalDuration"
               />
             </v-row>
           </v-col>
-          <!--  -->
         </v-row>
       </div>
     </v-card>
@@ -55,7 +54,7 @@
 
 <script>
 import FloatingPlayerProgress from './FloatingPlayerProgress.vue'
-import FloatingPlayerInfo from './FloatingPlayerInfo.vue'
+import RecordInfo from '../RecordInfo.vue'
 import FloatingPlayerControls from './FloatingPlayerControls.vue'
 import FloatingPlayerDuration from './FloatingPlayerDuration.vue'
 
@@ -63,7 +62,7 @@ export default {
   name: 'FloatingPlayer',
   components: {
     FloatingPlayerProgress,
-    FloatingPlayerInfo,
+    RecordInfo,
     FloatingPlayerControls,
     FloatingPlayerDuration
   },
@@ -71,34 +70,101 @@ export default {
     record: {
       type: Object,
       require: true
+    },
+    playlist: {
+      type: Array,
+      require: true
     }
   },
   data () {
     return {
-      isPlaying: false,
-      duration: 0
+      player: {
+        audio: null,
+        recordId: null,
+        isPlaying: false,
+        currentDuration: 0,
+        totalDuration: 0
+      }
     }
   },
   watch: {
     'record.id': {
       handler () {
-        this.duration = 0
+        if (this.record.id === this.player.recordId) {
+          return
+        }
+
+        if (this.player.audio) {
+          this.destroySound()
+        }
+
+        this.player.audio = new Audio(this.record.src)
+        this.player.audio.addEventListener('loadedmetadata', this.onLoadedmetadata, { once: true })
+        this.player.audio.addEventListener('canplay', this.play, { once: true })
+        this.player.audio.addEventListener('timeupdate', this.onTimeupdate)
       },
       immediate: true
     }
   },
+  beforeDestroy () {
+    this.destroySound()
+  },
   methods: {
-    onSeek (value) {
-      this.duration = value
+    seek (value) {
+      this.player.audio.currentTime = value
     },
-    onPlay () {
-      this.isPlaying = true
+    play () {
+      if (this.player.isPlaying === true) {
+        return
+      }
+
+      this.player.isPlaying = true
+      this.player.audio.play()
     },
-    onPause () {
-      this.isPlaying = false
+    pause () {
+      if (this.player.isPlaying === false) {
+        return
+      }
+
+      this.player.isPlaying = false
+      this.player.audio.pause()
     },
-    onSkipPrev () { },
-    onSkipNext () { }
+    destroySound () {
+      this.pause() // https://developer.mozilla.org/en-US/docs/Web/API/HTMLAudioElement/Audio#memory_usage_and_management
+
+      this.player.audio.removeEventListener('timeupdate', this.onTimeupdate)
+      this.player.audio = null
+    },
+    skipPrev () {
+      const audioIdx = this.playlist.findIndex(audio => audio.id === this.player.recordId)
+      const prevIdx = audioIdx === 0 ? this.playlist.length - 1 : audioIdx - 1
+
+      this.emitSkip(this.playlist[prevIdx].id)
+    },
+    skipNext () {
+      const audioIdx = this.playlist.findIndex(audio => audio.id === this.player.recordId)
+      const nextIdx = audioIdx === this.playlist.length - 1 ? 0 : audioIdx + 1
+
+      this.emitSkip(this.playlist[nextIdx].id)
+    },
+    onTimeupdate (event) {
+      const { currentTime } = event.path[0]
+
+      requestAnimationFrame(() => {
+        this.player.currentDuration = currentTime
+      })
+    },
+    onLoadedmetadata (event) {
+      const { duration } = event.path[0]
+
+      this.player.recordId = this.record.id
+      this.player.currentDuration = 0
+      this.player.totalDuration = duration
+    },
+    // emits
+    emitSkip (id) {
+      this.$emit('skip', id)
+    }
   }
 }
 </script>
