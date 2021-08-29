@@ -1,14 +1,11 @@
 <template>
   <div class="floating-player__info d-flex">
-    <div
-      v-if="thumb"
-      class="floating-player__thumb pr-3"
-    >
+    <div class="floating-player__thumb pr-3">
       <v-img
         height="64px"
         width="64px"
         :aspect-ratio="1/1"
-        :src="thumb"
+        :src="thumb || $options.lazySrc"
         :lazy-src="$options.lazySrc"
       />
     </div>
@@ -27,10 +24,8 @@
 const lazySrc = require('@/assets/images/thumb-lazy.jpg')
 
 export default {
-  name: 'FloatingPlayerInfo',
-  $options: {
-    lazySrc
-  },
+  name: 'RecordInfo',
+  lazySrc,
   props: {
     thumb: {
       type: String,
@@ -38,11 +33,11 @@ export default {
     },
     soundName: {
       type: String,
-      default: 'Name of the Sound'
+      default: 'Song name not defined'
     },
     soundAuthor: {
       type: String,
-      default: 'Author’s name'
+      default: 'Author\'s name not'
     }
   }
 }
