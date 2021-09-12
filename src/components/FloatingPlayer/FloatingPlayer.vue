@@ -3,6 +3,7 @@
     <FloatingPlayerProgress
       :curent-duration="player.currentDuration"
       :total-duration="player.totalDuration"
+      :loading="isLoading"
       @seek="seek"
     />
     <v-card
@@ -26,6 +27,7 @@
           <v-col>
             <FloatingPlayerControls
               :playing="player.isPlaying"
+              :loading="isLoading"
               @click:play="play"
               @click:pause="pause"
               @click:prev="skipPrev"
@@ -84,7 +86,8 @@ export default {
         isPlaying: false,
         currentDuration: 0,
         totalDuration: 0
-      }
+      },
+      isLoading: false
     }
   },
   watch: {
@@ -98,12 +101,16 @@ export default {
           this.destroySound()
         }
 
+        this.isLoading = true
+
         this.player.audio = new Audio(process.env.VUE_APP_API_BASE_URL + this.record.src)
         this.player.audio.volume = 0.1
         this.player.audio.addEventListener('loadedmetadata', this.onLoadedmetadata, { once: true })
         this.player.audio.addEventListener('canplay', this.onCanPlay, { once: true })
         this.player.audio.addEventListener('timeupdate', this.onTimeupdate)
         this.player.audio.addEventListener('ended', this.onEnded)
+        this.player.audio.addEventListener('waiting', () => { this.isLoading = true })
+        this.player.audio.addEventListener('playing', () => { this.isLoading && (this.isLoading = false) })
       },
       immediate: true
     }
@@ -114,6 +121,7 @@ export default {
   methods: {
     seek (value) {
       this.player.audio.currentTime = value
+      this.player.currentDuration = value
     },
     play () {
       if (this.player.isPlaying === true) {
@@ -141,7 +149,7 @@ export default {
         recordId: null,
         isPlaying: false,
         currentDuration: 0,
-        totalDuration: 0
+        totalDuration: this.player.totalDuration
       }
     },
     skipPrev () {
@@ -174,6 +182,7 @@ export default {
       this.skipNext()
     },
     onCanPlay () {
+      this.isLoading = false
       this.play()
     },
     // emits

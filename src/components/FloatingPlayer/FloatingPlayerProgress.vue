@@ -4,6 +4,7 @@
       <v-slider
         v-model="localCurrentDuration"
         :max="totalDuration"
+        :disabled="loading"
         step="0"
         height="6"
         hide-details
@@ -33,6 +34,10 @@ export default {
     curentDuration: {
       type: [Number, String],
       default: 0
+    },
+    loading: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
