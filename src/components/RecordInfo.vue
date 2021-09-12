@@ -5,7 +5,7 @@
         height="64px"
         width="64px"
         :aspect-ratio="1/1"
-        :src="thumb || $options.lazySrc"
+        :src="imageUrl || $options.lazySrc"
         :lazy-src="$options.lazySrc"
       />
     </div>
@@ -38,6 +38,11 @@ export default {
     soundAuthor: {
       type: String,
       default: 'Author\'s name not'
+    }
+  },
+  computed: {
+    imageUrl () {
+      return process.env.VUE_APP_API_BASE_URL + this.thumb
     }
   }
 }

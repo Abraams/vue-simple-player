@@ -12,7 +12,7 @@
               class="pa-2 pr-6"
               :class="{'mt-4': idx !== 0}"
               :elevation="(currentRecord && currentRecord.id === record.id) || hover ? 4 : 2"
-              @click="setRecord(record.id)"
+              @click="setRecord(record)"
             >
               <v-row
                 no-gutters
@@ -58,6 +58,7 @@
 <script>
 import FloatingPlayer from './components/FloatingPlayer/FloatingPlayer.vue'
 import RecordInfo from './components/RecordInfo.vue'
+import { playlistApi } from '@/api/playlistApi.js'
 
 export default {
   name: 'App',
@@ -67,32 +68,24 @@ export default {
   },
   data () {
     return {
-      playlist: [
-        {
-          id: 984231287,
-          author: 'Bensound',
-          name: 'Creative Minds',
-          src: require('@/assets/audio/bensound-creativeminds.mp3'),
-          img: require('@/assets/images/creative_minds.jpg')
-        },
-        {
-          id: 171899812,
-          author: 'Bensound',
-          name: 'Happy Rock',
-          src: require('@/assets/audio/bensound-happyrock.mp3'),
-          img: require('@/assets/images/happy_rock.jpg')
-        }
-      ],
+      playlist: [],
       currentRecord: null
     }
   },
+  async mounted () {
+    try {
+      this.playlist = await playlistApi.get()
+    } catch (error) {
+      console.error(error)
+    }
+  },
   methods: {
-    setRecord (id) {
-      if (id === this.currentRecord?.id) {
+    setRecord (record) {
+      if (this.currentRecord?.id === record.id) {
         return
       }
 
-      this.currentRecord = this.playlist.find(record => record.id === id) || null
+      this.currentRecord = record
     }
   }
 }

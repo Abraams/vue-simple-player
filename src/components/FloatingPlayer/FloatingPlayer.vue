@@ -98,10 +98,12 @@ export default {
           this.destroySound()
         }
 
-        this.player.audio = new Audio(this.record.src)
+        this.player.audio = new Audio(process.env.VUE_APP_API_BASE_URL + this.record.src)
+        this.player.audio.volume = 0.1
         this.player.audio.addEventListener('loadedmetadata', this.onLoadedmetadata, { once: true })
-        this.player.audio.addEventListener('canplay', this.play, { once: true })
+        this.player.audio.addEventListener('canplay', this.onCanPlay, { once: true })
         this.player.audio.addEventListener('timeupdate', this.onTimeupdate)
+        this.player.audio.addEventListener('ended', this.onEnded)
       },
       immediate: true
     }
@@ -133,19 +135,26 @@ export default {
       this.pause() // https://developer.mozilla.org/en-US/docs/Web/API/HTMLAudioElement/Audio#memory_usage_and_management
 
       this.player.audio.removeEventListener('timeupdate', this.onTimeupdate)
-      this.player.audio = null
+      this.player.audio.removeEventListener('ended', this.onTimeupdate)
+      this.player = {
+        audio: null,
+        recordId: null,
+        isPlaying: false,
+        currentDuration: 0,
+        totalDuration: 0
+      }
     },
     skipPrev () {
       const audioIdx = this.playlist.findIndex(audio => audio.id === this.player.recordId)
       const prevIdx = audioIdx === 0 ? this.playlist.length - 1 : audioIdx - 1
 
-      this.emitSkip(this.playlist[prevIdx].id)
+      this.emitSkip(this.playlist[prevIdx])
     },
     skipNext () {
       const audioIdx = this.playlist.findIndex(audio => audio.id === this.player.recordId)
       const nextIdx = audioIdx === this.playlist.length - 1 ? 0 : audioIdx + 1
 
-      this.emitSkip(this.playlist[nextIdx].id)
+      this.emitSkip(this.playlist[nextIdx])
     },
     onTimeupdate (event) {
       const { currentTime } = event.path[0]
@@ -161,9 +170,15 @@ export default {
       this.player.currentDuration = 0
       this.player.totalDuration = duration
     },
+    onEnded () {
+      this.skipNext()
+    },
+    onCanPlay () {
+      this.play()
+    },
     // emits
-    emitSkip (id) {
-      this.$emit('skip', id)
+    emitSkip (record) {
+      this.$emit('skip', record)
     }
   }
 }
