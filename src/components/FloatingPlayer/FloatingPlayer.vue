@@ -62,7 +62,7 @@ import FloatingPlayerProgress from './FloatingPlayerProgress.vue'
 import RecordInfo from '../RecordInfo.vue'
 import FloatingPlayerControls from './FloatingPlayerControls.vue'
 import FloatingPlayerDuration from './FloatingPlayerDuration.vue'
-import { PlayerService } from '../../servises/Player.service'
+import { PlayerService } from '../../services/Player.service'
 
 export default {
   name: 'FloatingPlayer',
