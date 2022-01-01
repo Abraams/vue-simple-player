@@ -27,8 +27,8 @@
           </v-col>
           <v-col>
             <FloatingPlayerControls
-              :loading="isLoading"
               v-if="player"
+              :loading="isLoading"
               :playing="player.playing"
               @click:play="play"
               @click:pause="pause"
@@ -101,14 +101,24 @@ export default {
 
         this.isLoading = true
 
-        this.player = new PlayerService(this.record, [{
-          eventName: 'ended',
-          callback: this.onEnded
-        }])
-
-        //
-        // this.player.audio.addEventListener('waiting', () => { this.isLoading = true })
-        // this.player.audio.addEventListener('playing', () => { this.isLoading && (this.isLoading = false) })
+        this.player = new PlayerService(this.record, [
+          {
+            eventName: 'ended',
+            callback: this.onEnded
+          },
+          {
+            eventName: 'canPlay',
+            callback: this.onCanPlay
+          },
+          {
+            eventName: 'waiting',
+            callback: this.onWaiting
+          },
+          {
+            eventName: 'playing',
+            callback: this.onPlaying
+          }
+        ])
       },
       immediate: true
     }
@@ -147,6 +157,12 @@ export default {
     },
     onCanPlay () {
       this.isLoading = false
+    },
+    onWaiting () {
+      this.isLoading = true
+    },
+    onPlaying () {
+      this.isLoading && (this.isLoading = false)
     },
     // emits
     emitSkip (record) {
