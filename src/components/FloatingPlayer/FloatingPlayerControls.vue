@@ -6,6 +6,7 @@
     >
       <!-- prev -->
       <v-btn
+        :disabled="loading"
         icon
         class="mr-1"
         color="primary"
@@ -17,6 +18,7 @@
       </v-btn>
       <!-- play/pause -->
       <v-btn
+        :loading="loading"
         icon
         x-large
         color="primary"
@@ -28,6 +30,7 @@
       </v-btn>
       <!-- next -->
       <v-btn
+        :disabled="loading"
         icon
         class="ml-1"
         color="primary"
@@ -46,6 +49,10 @@ export default {
   name: 'FloatingPlayerControls',
   props: {
     playing: {
+      type: Boolean,
+      default: false
+    },
+    loading: {
       type: Boolean,
       default: false
     }

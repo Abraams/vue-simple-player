@@ -4,6 +4,7 @@
       v-if="player"
       :curent-duration="player.currentDuration"
       :total-duration="player.totalDuration"
+      :loading="isLoading"
       @seek="seek"
     />
     <v-card
@@ -27,6 +28,7 @@
           <v-col>
             <FloatingPlayerControls
               v-if="player"
+              :loading="isLoading"
               :playing="player.playing"
               @click:play="play"
               @click:pause="pause"
@@ -60,7 +62,7 @@ import FloatingPlayerProgress from './FloatingPlayerProgress.vue'
 import RecordInfo from '../RecordInfo.vue'
 import FloatingPlayerControls from './FloatingPlayerControls.vue'
 import FloatingPlayerDuration from './FloatingPlayerDuration.vue'
-import { PlayerService } from '../../servises/Player.service'
+import { PlayerService } from '../../services/Player.service'
 
 export default {
   name: 'FloatingPlayer',
@@ -82,7 +84,8 @@ export default {
   },
   data () {
     return {
-      player: null
+      player: null,
+      isLoading: false
     }
   },
   watch: {
@@ -96,10 +99,26 @@ export default {
           this.destroyPlayer()
         }
 
-        this.player = new PlayerService(this.record, [{
-          eventName: 'ended',
-          callback: this.onEnded
-        }])
+        this.isLoading = true
+
+        this.player = new PlayerService(this.record, [
+          {
+            eventName: 'ended',
+            callback: this.onEnded
+          },
+          {
+            eventName: 'canPlay',
+            callback: this.onCanPlay
+          },
+          {
+            eventName: 'waiting',
+            callback: this.onWaiting
+          },
+          {
+            eventName: 'playing',
+            callback: this.onPlaying
+          }
+        ])
       },
       immediate: true
     }
@@ -112,11 +131,11 @@ export default {
       this.player.destroy()
       this.player = null
     },
-    play () {
-      this.player.play()
-    },
     seek (value) {
       this.player.seek(value)
+    },
+    play () {
+      this.player.play()
     },
     pause () {
       this.player.pause()
@@ -135,6 +154,15 @@ export default {
     },
     onEnded () {
       this.skipNext()
+    },
+    onCanPlay () {
+      this.isLoading = false
+    },
+    onWaiting () {
+      this.isLoading = true
+    },
+    onPlaying () {
+      this.isLoading && (this.isLoading = false)
     },
     // emits
     emitSkip (record) {
